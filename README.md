@@ -1,1 +1,5 @@
-# testes-automatizados_evolua
+## Executar o comando 
+
+```
+pip install -r requirements-dev.txt
+```
