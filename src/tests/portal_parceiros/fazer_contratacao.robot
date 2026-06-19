@@ -1,0 +1,31 @@
+*** Settings ***
+Library            ../../../load_env.py
+Resource           ../../common/generic-keywords.resource
+Resource           ../../keywords/portal-parceiros-keywords.resource
+Resource           ../../keywords/esteira-digital-keywords.resource
+
+*** Test Cases ***
+REALIZAR CONTRATACAO PELO PORTAL
+    [Documentation]    Realizar contratação do Lead pelo Portal do Parceiro
+    [Tags]    REGRESSAO
+    &{lead}=    GERAR MASSA DE DADOS COMPLETA
+
+    ACESSAR PAGINA https://parceiro-dev.evoluaenergia.com.br/login/
+    REALIZAR LOGIN PORTAL DOS PARCEIROS    email=%{EMAIL_PORTAL}    password=%{PASSWORD_PORTAL}
+    SELECIONAR MODULO PORTAL DOS PARCEIROS      modulo=Fazer contratação
+    PREENCHER FORMULARIO BENEFICIO PORTAL DOS PARCEIROS     
+        ...     name=${lead}[name]
+        ...     cpf=${lead}[cpf]
+        ...     email=${lead}[email]
+        ...     celular=31912345678
+    CRIAR FATURA CLIENTE PF
+        ...        installation_number=${lead}[installation_number]
+        ...        cpf=${lead}[cpf]
+        ...        name=${lead}[name]
+        ...        reference_date=MAI/2050
+        ...        due_date=12/05/2050
+        ...        value=${lead}[energy_value]
+        ...        class=Monofásico
+        ...        subclass=Residencial
+        ...        tariff_type=Convencional B1
+    ANEXAR CONTA CLIENTE PF

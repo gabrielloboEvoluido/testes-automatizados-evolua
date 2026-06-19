@@ -1,7 +1,7 @@
 *** Settings ***
-Library            ../../load_env.py
-Resource           ../keywords/esteira-digital-keywords.resource
-Resource           ../common/generic-keywords.resource
+Library            ../../../load_env.py
+Resource           ../../keywords/esteira-digital-keywords.resource
+Resource           ../../common/generic-keywords.resource
 
 *** Test Cases ***
 REGRESSAO-ESTEIRA-DIGITAL-PF
