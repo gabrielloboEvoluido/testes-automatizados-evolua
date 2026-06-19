@@ -91,7 +91,7 @@ ANEXAR CONTA CLIENTE PF
     COLETAR EVIDENCIA    
     ...    file_name=3-anexar-conta-de-energia
 
-    Upload File By Selector    //*[@id="file-upload"]    ../docs/Fatura-Cliente.pdf
+    Upload File By Selector    //*[@id="file-upload"]       ./src/docs/Fatura-Cliente.pdf
 
     Sleep    5s
 

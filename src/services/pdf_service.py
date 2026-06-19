@@ -14,9 +14,9 @@ def gerar_pdf(
     classe,
     subclasse,
     tipo_tarifa,
-    arquivo_saida="../docs/Fatura-Cliente.pdf"
+    arquivo_saida="./src/docs/Fatura-Cliente.pdf"
 ):
-    template = "../templates/template-fatura-mg.jpg"
+    template = "./src/templates/template-fatura-mg.jpg"
 
     # Largura e altura de imagem
     largura, altura = Image.open(template).size
