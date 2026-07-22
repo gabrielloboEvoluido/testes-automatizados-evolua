@@ -56,6 +56,64 @@ def buscar_leads_por_cpf(cpf):
     """
     _validar_conexao()
 
+    cpf_sem_formatacao = _normalizar_cpf(cpf)
+
+    soql = f"""
+        SELECT
+            Id,
+            Name,
+            Email,
+            Phone,
+            Status,
+            CreatedDate,
+            CPFCNPJSemFormataco__c
+        FROM Lead
+        WHERE CPFCNPJSemFormataco__c = '{cpf_sem_formatacao}'
+        ORDER BY CreatedDate DESC
+    """
+
+    resultado = _client.query(soql)
+    registros = resultado.get("records", [])
+
+    if not registros:
+        raise AssertionError(
+            "Nenhum Lead encontrado no Salesforce para o CPF informado."
+        )
+
+    return registros
+
+
+def buscar_contratos_por_cpf(cpf):
+    """
+    Retorna todos os Contracts (contratos) cadastrados para o CPF informado,
+    ordenados do mais recente para o mais antigo.
+
+    Assim como os Leads, um mesmo CPF/CNPJ pode ter vários contratos em
+    status diferentes. Retorna a lista (possivelmente vazia); cabe a quem
+    consome decidir a validação. Observação: no objeto Contract o campo de
+    CPF/CNPJ é 'CPFCNPJSemFormatacao__c' (diferente do Lead, que é
+    'CPFCNPJSemFormataco__c').
+    """
+    _validar_conexao()
+
+    cpf_sem_formatacao = _normalizar_cpf(cpf)
+
+    soql = f"""
+        SELECT
+            Id,
+            Status,
+            CPFCNPJSemFormatacao__c
+        FROM Contract
+        WHERE CPFCNPJSemFormatacao__c = '{cpf_sem_formatacao}'
+        ORDER BY CreatedDate DESC
+    """
+
+    resultado = _client.query(soql)
+
+    return resultado.get("records", [])
+
+
+def _normalizar_cpf(cpf):
     cpf_sem_formatacao = (
         str(cpf)
         .replace(".", "")
@@ -74,28 +132,7 @@ def buscar_leads_por_cpf(cpf):
             "O CPF/CNPJ informado deve possuir 11 ou 14 dígitos."
         )
 
-    soql = f"""
-        SELECT
-            Id,
-            Name,
-            Email,
-            Phone,
-            CreatedDate,
-            CPFCNPJSemFormataco__c
-        FROM Lead
-        WHERE CPFCNPJSemFormataco__c = '{cpf_sem_formatacao}'
-        ORDER BY CreatedDate DESC
-    """
-
-    resultado = _client.query(soql)
-    registros = resultado.get("records", [])
-
-    if not registros:
-        raise AssertionError(
-            "Nenhum Lead encontrado no Salesforce para o CPF informado."
-        )
-
-    return registros
+    return cpf_sem_formatacao
 
 
 def _validar_conexao():

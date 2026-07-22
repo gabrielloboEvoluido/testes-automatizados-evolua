@@ -196,6 +196,7 @@ VALIDAR DADOS DO CARD EM TODAS AS COLUNAS
             Run Keyword And Continue On Failure
             ...    VALIDAR CARD KANBAN
             ...    ${base}
+            ...    ${coluna}
         END
     END
 
@@ -203,10 +204,10 @@ VALIDAR DADOS DO CARD EM TODAS AS COLUNAS
 VALIDAR CARD KANBAN
     [Documentation]
     ...    Valida um único card do Kanban (formato dos dados exibidos +
-    ...    nome no Salesforce). Chamada via "Run Keyword And Continue On
-    ...    Failure" para que a divergência de um card não impeça a
-    ...    validação dos demais cards/colunas na mesma execução.
-    [Arguments]    ${base}
+    ...    nome e status no Salesforce). Chamada via "Run Keyword And
+    ...    Continue On Failure" para que a divergência de um card não impeça
+    ...    a validação dos demais cards/colunas na mesma execução.
+    [Arguments]    ${base}    ${coluna}
 
     ${nome_card}=    Get Text
     ...    xpath=${base}//p
@@ -255,6 +256,7 @@ VALIDAR CARD KANBAN
         VALIDAR LEAD SALESFORCE
         ...    ${cpf}
         ...    ${nome_portal}
+        ...    ${coluna}
     FINALLY
         FECHAR DETALHE DO LEAD
     END
@@ -262,15 +264,15 @@ VALIDAR CARD KANBAN
 
 VALIDAR LEAD SALESFORCE
     [Documentation]
-    ...    Valida o nome do Lead exibido no card do portal contra os
-    ...    registros do Salesforce para o mesmo CPF/CNPJ.
+    ...    Valida o Lead exibido no card do portal contra os registros do
+    ...    Salesforce para o mesmo CPF/CNPJ: (1) o nome e (2) se o Status do
+    ...    Lead corresponde à coluna do Kanban em que o card está.
     ...
     ...    Pode existir mais de um Lead para o mesmo CPF (ex.: recadastro
     ...    após correção de um Lead anterior com dados errados). Por isso a
-    ...    validação é considerada OK se o nome do portal corresponder a
-    ...    QUALQUER UM dos Leads retornados, e só falha se não houver
-    ...    nenhuma correspondência.
-    [Arguments]    ${cpf}    ${nome_portal}
+    ...    validação é considerada OK se o nome/status do portal corresponder
+    ...    a QUALQUER UM dos Leads retornados, e só falha se nenhum bater.
+    [Arguments]    ${cpf}    ${nome_portal}    ${coluna}
 
     @{leads}=    BUSCAR LEADS POR CPF    ${cpf}
 
@@ -316,7 +318,121 @@ VALIDAR LEAD SALESFORCE
     END
 
     Log To Console
-    ...    ✓ Lead validado: ${nome_portal}
+    ...    ✓ Nome validado: ${nome_portal}
+
+    VALIDAR STATUS NA COLUNA    ${coluna}    ${cpf}    ${leads}
+
+
+VALIDAR STATUS NA COLUNA
+    [Documentation]
+    ...    Valida se o registro está na coluna correta do Kanban conforme o
+    ...    Status no Salesforce. Para a maioria das colunas o Status vem do
+    ...    objeto Lead; a coluna "Aguardando Assinatura" é validada pelo
+    ...    Status do objeto Contract. Considera OK se QUALQUER registro do
+    ...    CPF tiver o Status esperado (tolerante a CPFs com múltiplos
+    ...    registros). Colunas sem Status correspondente (ex.: "Convertido")
+    ...    não são validadas.
+    [Arguments]    ${coluna}    ${cpf}    ${leads}
+
+    IF    '${coluna}' == 'Aguardando Assinatura'
+        VALIDAR STATUS DO CONTRATO    ${coluna}    ${cpf}
+        RETURN
+    END
+
+    @{status_aceitos}=    STATUS ACEITOS PARA COLUNA    ${coluna}
+    ${qtd_aceitos}=    Get Length    ${status_aceitos}
+
+    IF    ${qtd_aceitos} == 0
+        Log To Console
+        ...    ⏭ Coluna "${coluna}" não é validada por Status (sem valor correspondente no objeto Lead).
+        RETURN
+    END
+
+    ${status_ok}=    Set Variable    ${False}
+    @{status_encontrados}=    Create List
+
+    FOR    ${lead}    IN    @{leads}
+        ${status_lead}=    Set Variable    ${lead}[Status]
+        Append To List    ${status_encontrados}    ${status_lead}
+
+        ${match}=    Evaluate    $status_lead in $status_aceitos
+
+        IF    ${match}
+            ${status_ok}=    Set Variable    ${True}
+            BREAK
+        END
+    END
+
+    Should Be True
+    ...    ${status_ok}
+    ...    Coluna divergente. Card na coluna "${coluna}" (Status aceitos: ${status_aceitos}), mas o(s) Lead(s) do CPF têm Status: ${status_encontrados}
+
+    Log To Console
+    ...    ✓ Status validado: coluna "${coluna}" (Status: ${status_encontrados})
+
+
+VALIDAR STATUS DO CONTRATO
+    [Documentation]
+    ...    Valida a coluna "Aguardando Assinatura" pelo Status do objeto
+    ...    Contract (não há esse valor no Status do Lead). Considera OK se
+    ...    QUALQUER Contract do CPF estiver com Status "Aguardando
+    ...    Assinatura".
+    [Arguments]    ${coluna}    ${cpf}
+
+    @{contratos}=    BUSCAR CONTRATOS POR CPF    ${cpf}
+
+    ${qtd}=    Get Length    ${contratos}
+
+    Should Be True
+    ...    ${qtd} > 0
+    ...    Card na coluna "${coluna}", mas nenhum Contract encontrado no Salesforce para o CPF ${cpf}.
+
+    ${status_ok}=    Set Variable    ${False}
+    @{status_encontrados}=    Create List
+
+    FOR    ${contrato}    IN    @{contratos}
+        ${status_contrato}=    Set Variable    ${contrato}[Status]
+        Append To List    ${status_encontrados}    ${status_contrato}
+
+        IF    '${status_contrato}' == 'Aguardando Assinatura'
+            ${status_ok}=    Set Variable    ${True}
+            BREAK
+        END
+    END
+
+    Should Be True
+    ...    ${status_ok}
+    ...    Coluna divergente. Card na coluna "${coluna}", mas nenhum Contract do CPF está em "Aguardando Assinatura". Status encontrados: ${status_encontrados}
+
+    Log To Console
+    ...    ✓ Status validado (Contract): coluna "${coluna}"
+
+
+STATUS ACEITOS PARA COLUNA
+    [Documentation]
+    ...    Retorna a lista de valores de API do campo Status do Lead que são
+    ...    aceitos para uma coluna do Kanban. A maioria das colunas tem um
+    ...    único valor idêntico ao nome. Exceções:
+    ...    - "Desqualificado" e "Não Qualificado" são sinônimos no funil
+    ...      (lead descartado): aceitam "Unqualified" (padrão) ou
+    ...      "Desqualificado" (resíduo legado da base).
+    ...    - "Convertido": sem valor correspondente no Lead -> lista vazia
+    ...      (não validada). "Aguardando Assinatura" é tratada à parte, via
+    ...      o Status do Contract.
+    [Arguments]    ${coluna}
+
+    IF    '${coluna}' == 'Convertido'
+        @{vazio}=    Create List
+        RETURN    @{vazio}
+    END
+
+    IF    '${coluna}' == 'Desqualificado' or '${coluna}' == 'Não Qualificado'
+        @{aceitos}=    Create List    Unqualified    Desqualificado
+        RETURN    @{aceitos}
+    END
+
+    @{aceitos}=    Create List    ${coluna}
+    RETURN    @{aceitos}
 
 
 ABRIR CARD E CAPTURAR CPF

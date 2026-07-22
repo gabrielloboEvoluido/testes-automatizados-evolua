@@ -16,6 +16,14 @@ BUSCAR LEADS POR CPF
     RETURN    ${resultado}
 
 
+BUSCAR CONTRATOS POR CPF
+    [Arguments]    ${cpf}
+
+    ${resultado}=    SalesforceAPI.Buscar Contratos Por CPF    ${cpf}
+
+    RETURN    ${resultado}
+
+
 EXECUTAR SOQL
     [Arguments]    ${soql}
 
