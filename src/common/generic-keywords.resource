@@ -1,5 +1,5 @@
 *** Settings ***
-[Documentation]        keywords genericas para reutilização...
+Documentation        keywords genericas para reutilização...
 Library        Browser
 Library        BuiltIn
 Library        Collections
@@ -11,7 +11,23 @@ Library        ../services/cpf_generator.py
 *** Keywords ***
 
 ACESSAR PAGINA ${url_pagina}
-    Open Browser    ${url_pagina}    browser=chromium    headless=False    pause_on_failure=True
+    # O caminho do navegador é configurável via variável de ambiente
+    # BROWSER_EXECUTABLE_PATH (definida no .env). Se estiver vazia, usa o
+    # chromium empacotado do Playwright (padrão em CI e na maioria das
+    # máquinas). Máquinas onde o chromium empacotado não inicia (ex.: falta
+    # do msvcp140_1.dll / VC++ Redistributable) podem apontar para um Chrome
+    # instalado no sistema definindo essa variável no seu .env local.
+    ${browser_path}=    Set Variable    %{BROWSER_EXECUTABLE_PATH=}
+
+    IF    '${browser_path}' == ''
+        New Browser    browser=chromium    headless=False
+    ELSE
+        New Browser    browser=chromium    executablePath=${browser_path}    headless=False
+    END
+
+    New Context
+    New Page    ${url_pagina}
+    Wait For Load State    domcontentloaded
 
 CRIAR FATURA CLIENTE PF
     [Arguments]    
@@ -114,4 +130,4 @@ GERAR MASSA DE DADOS COMPLETA
 
 COLETAR EVIDENCIA
     [Arguments]    ${file_name}=
-    Take Screenshot    filename=C:/Users/gabriel.lobo_evoluae/Desktop/testes-automatizados-evolua/src/screenshots/${file_name}    fileType=png    fullPage=True
+    Take Screenshot    filename=../../../screenshots/${file_name}    fileType=png    fullPage=True
