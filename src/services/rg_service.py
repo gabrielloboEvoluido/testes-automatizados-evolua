@@ -1,9 +1,9 @@
 from PIL import Image
 from reportlab.pdfgen import canvas
 
-def gerar_rg (rg, data_expedicao, nome, pai, mae, naturalidade, data_nascimento, cpf, arquivo_saida='../docs/rg-verso.pdf'):
+def gerar_rg (rg, data_expedicao, nome, pai, mae, naturalidade, data_nascimento, cpf, arquivo_saida='src/docs/rg-verso.pdf'):
     
-    template = '../templates/rg-template.png'
+    template = 'src/templates/rg-template.png'
 
     largura, altura = Image.open(template).size
 

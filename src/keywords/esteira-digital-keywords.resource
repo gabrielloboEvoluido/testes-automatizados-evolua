@@ -46,7 +46,15 @@ APLICAR CUPOM
     END
 
 PREENCHER FORMULARIO CADASTRO LEAD
-    [Arguments]    ${name}=    ${cpf}=    ${email}=    ${cellphone}=    ${state}=    ${energy_value}=    ${invite_code}=    ${coupon}=
+    [Arguments]    
+        ...     ${name}=    
+        ...     ${cpf}=    
+        ...     ${email}=    
+        ...     ${cellphone}=    
+        ...     ${state}=    
+        ...     ${energy_value}=    
+        ...     ${invite_code}=    
+        ...     ${coupon}=
 
     Fill Text    //input[@placeholder='Nome completo do titular da conta']    ${name}
 
@@ -125,7 +133,7 @@ PREENCHER DADOS ENDERECO
     # END
 
     # Numero da residência:
-    Wait For Elements State    //input[@placeholder='Número']    visible    15s
+    Wait For Elements State    //input[@placeholder='Número']    visible    20s
     Fill Text    //input[@placeholder='Número']    48
 
     # Selecionar o tipo de imóvel:
@@ -139,6 +147,10 @@ PREENCHER DADOS ENDERECO
 
     # Confirmar o preenchimento do endereço
     Wait For Elements State    //button[text()='Confirmar']    visible    10s
+
+    COLETAR EVIDENCIA    
+    ...    file_name=4-preenchimento-endereco-lead
+
     Click    //button[text()='Confirmar']
 
     # Seguir com a contratação
@@ -149,13 +161,21 @@ PREENCHER DADOS ENDERECO
 ANEXAR DOCUMENTACAO CLIENTE PF
     # FRENTE DO RG
     Wait For Elements State    //button[text()='Anexar documento']     visible    10s
-    Upload File By Selector    //html/body/main/input    ../docs/rg-frente.png
+
+    COLETAR EVIDENCIA    
+    ...    file_name=5-tela-anexo-frente-rg
+
+    Upload File By Selector    //html/body/main/input    src/docs/rg-frente.png
 
     Sleep    10s
 
     # VERSO DO RG
     Wait For Elements State    //button[text()='Anexar verso do documento']     visible    10s
-    Upload File By Selector    //html/body/main/input    ../docs/rg-verso.pdf
+
+    COLETAR EVIDENCIA    
+    ...    file_name=6-tela-anexo-verso-rg
+
+    Upload File By Selector    //html/body/main/input    src/docs/rg-verso.pdf
 
     Sleep    10s
 
@@ -185,4 +205,32 @@ PREENCHER COMPLEMENTO DE DADOS PESSOAIS
 
     # Avançar proximo etapa:
     Wait For Elements State    //button[text()='Confirmar']    visible    10s
+
+    COLETAR EVIDENCIA    
+    ...    file_name=7-informacoes-complementares-lead
+
     Click    //button[text()='Confirmar']
+
+SELECIONAR RESPONSAVEL FINANCEIRO
+    Wait For Elements State     //button[text()='Confirmar']      visible     20s
+
+    COLETAR EVIDENCIA    
+    ...    file_name=8-selecionar-responsavel-financeiro
+    
+    Click      //button[text()='Confirmar']
+VISUALIZAR O CONTRATO
+    Wait For Elements State     //button[text()='Visualizar contrato']      visible     30s
+    Click      //button[text()='Visualizar contrato']
+
+    COLETAR EVIDENCIA    
+    ...    file_name=9-visualizar-o-contrato
+
+    sleep   15s
+
+IR PARA O FAQ
+    Go To       https://digital-dev.evoluaenergia.com.br/faq/
+
+    COLETAR EVIDENCIA    
+    ...    file_name=10-pop-up-contratacao
+
+    Sleep   120s

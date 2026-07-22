@@ -108,10 +108,10 @@ GERAR MASSA DE DADOS COMPLETA
         ...            naturalness=${lead_naturalness}
         ...            birthdate=${lead_birthdate}
 
-    Log To Console    ${massa_dados}
-
+    Log To Console     Lead Criado: ${lead_name}
+        
     RETURN    ${massa_dados}
 
 COLETAR EVIDENCIA
     [Arguments]    ${file_name}=
-    Take Screenshot    filename=../../../screenshots/${file_name}    fileType=png    fullPage=True
+    Take Screenshot    filename=C:/Users/gabriel.lobo_evoluae/Desktop/testes-automatizados-evolua/src/screenshots/${file_name}    fileType=png    fullPage=True
